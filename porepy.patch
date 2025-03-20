@@ -1,0 +1,69 @@
+diff --git a/src/porepy/models/contact_mechanics_biot_model.py b/src/porepy/models/contact_mechanics_biot_model.py
+index 3f5f6b6c..2fecdb45 100644
+--- a/src/porepy/models/contact_mechanics_biot_model.py
++++ b/src/porepy/models/contact_mechanics_biot_model.py
+@@ -936,7 +936,7 @@ class ContactMechanicsBiot(pp.ContactMechanics):
+             * self._ad.mortar_projections_scalar.mortar_to_primary_int
+             * self._ad.interface_flux
+             + flux_discr.bound_pressure_face * bc
+-            + flux_discr.vector_source * vector_source_subdomains
++            + flux_discr.bound_pressure_vector_source * vector_source_subdomains
+         )
+         return p_primary
+ 
+diff --git a/src/porepy/models/incompressible_flow_model.py b/src/porepy/models/incompressible_flow_model.py
+index 9676c27d..f651f6c8 100644
+--- a/src/porepy/models/incompressible_flow_model.py
++++ b/src/porepy/models/incompressible_flow_model.py
+@@ -333,7 +333,7 @@ class IncompressibleFlow(pp.models.abstract_model.AbstractModel):
+             * self._ad.mortar_proj.mortar_to_primary_int
+             * mortar_flux
+             + flux_discr.bound_pressure_face * bc_val
+-            + flux_discr.vector_source * vector_source_grids
++            + flux_discr.bound_pressure_vector_source * vector_source_grids
+         )
+         # Project the two pressures to the interface and equate with \lambda
+         interface_flow_eq = (
+diff --git a/src/porepy/numerics/ad/operators.py b/src/porepy/numerics/ad/operators.py
+index 1ed2b50e..2ab625ae 100644
+--- a/src/porepy/numerics/ad/operators.py
++++ b/src/porepy/numerics/ad/operators.py
+@@ -703,7 +703,7 @@ class Operator:
+                     try:
+                         state[ind] = mdg.interface_data(g)[pp.STATE][pp.ITERATE][var]
+                     except KeyError:
+-                        prev_vals[ind] = mdg.interface_data(g)[pp.STATE][var]
++                        state[ind] = mdg.interface_data(g)[pp.STATE][var]
+                 else:
+                     try:
+                         state[ind] = mdg.subdomain_data(g)[pp.STATE][pp.ITERATE][var]
+diff --git a/src/porepy/numerics/fv/mpfa.py b/src/porepy/numerics/fv/mpfa.py
+index c4838350..ce75f7db 100644
+--- a/src/porepy/numerics/fv/mpfa.py
++++ b/src/porepy/numerics/fv/mpfa.py
+@@ -101,7 +101,7 @@ class Mpfa(pp.FVElliptic):
+             )
+             matrix_dictionary[
+                 self.bound_pressure_vector_source_matrix_key
+-            ] = sps.csc_matrix((sd.num_faces, sd.num_faces * vector_source_dim))
++            ] = sps.csc_matrix((sd.num_faces, sd.num_cells * vector_source_dim))
+             # Done
+             return
+ 
+diff --git a/src/porepy/numerics/fv/tpfa.py b/src/porepy/numerics/fv/tpfa.py
+index 3842e09d..aae45479 100644
+--- a/src/porepy/numerics/fv/tpfa.py
++++ b/src/porepy/numerics/fv/tpfa.py
+@@ -158,6 +158,12 @@ class Tpfa(pp.FVElliptic):
+ 
+         # Distance from face center to cell center
+         fc_cc = sd.face_centers[::, fi] - sd.cell_centers[::, ci]
++        # lunghezze = np.linalg.norm(fc_cc, 2, axis=0)
++        # facce_frattura = sd.tags['fracture_faces'][fi]
++        # aaaapertura = sd.tags.get('aaaapertura', 0)
++        # alpha = (lunghezze - facce_frattura*aaaapertura/2)/lunghezze
++        # if aaaapertura == 0: assert np.all(alpha == 1)
++        # fc_cc *= alpha
+ 
+         # Transpose normal vectors to match the shape of K and multiply the two
+         nk = perm * n

@@ -1,0 +1,14 @@
+import ddf.common as co
+import ddf.hrl as hrl
+
+imp = dict(cartella='tmp', nome='eig', parla=3, campi_post=[])
+pb = co.pkl(imp)
+
+mdg, dati = hrl.vg14('D', 8)
+pb = hrl.HRL(mdg, dati, imp)
+pb.init()
+pb.steady_state()
+eig = pb.eig(k=5, ks=1)
+print(f'Scenario D8. Primi 5 autovalori: ', eig.vals)
+pb.esporta(stato=1, pkl=1)
+print('Dettagli nella cartella tmp/eig')
